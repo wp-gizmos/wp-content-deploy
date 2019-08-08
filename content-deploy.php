@@ -51,9 +51,11 @@ function wpcd_page() {
 		$wpcd_remote_url = filter_input( INPUT_POST, 'wpcd_remote_url', FILTER_SANITIZE_SPECIAL_CHARS );
 		$wpcd_key = filter_input( INPUT_POST, 'wpcd_key', FILTER_SANITIZE_SPECIAL_CHARS );
 		$wpcd_default_user = filter_input( INPUT_POST, 'wpcd_default_user', FILTER_SANITIZE_SPECIAL_CHARS );
+		$wpcd_local_environment = filter_input( INPUT_POST, 'wpcd_local_environment', FILTER_SANITIZE_SPECIAL_CHARS);
 		update_option( 'wpcd_remote_url', $wpcd_remote_url, false );
 		update_option( 'wpcd_key', $wpcd_key, false );
 		update_option( 'wpcd_default_user', $wpcd_key, false );
+		update_option( 'wpcd_local_environment', $wpcd_local_environment, false );
 	}
 
 	echo '
