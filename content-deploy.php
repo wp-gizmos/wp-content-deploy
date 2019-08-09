@@ -51,9 +51,11 @@ function wpcd_page() {
 		$wpcd_remote_url = filter_input( INPUT_POST, 'wpcd_remote_url', FILTER_SANITIZE_SPECIAL_CHARS );
 		$wpcd_key = filter_input( INPUT_POST, 'wpcd_key', FILTER_SANITIZE_SPECIAL_CHARS );
 		$wpcd_default_user = filter_input( INPUT_POST, 'wpcd_default_user', FILTER_SANITIZE_SPECIAL_CHARS );
+		$wpcd_local_environment = filter_input( INPUT_POST, 'wpcd_local_environment', FILTER_SANITIZE_SPECIAL_CHARS);
 		update_option( 'wpcd_remote_url', $wpcd_remote_url, false );
 		update_option( 'wpcd_key', $wpcd_key, false );
 		update_option( 'wpcd_default_user', $wpcd_key, false );
+		update_option( 'wpcd_local_environment', $wpcd_local_environment, false );
 	}
 
 	echo '
@@ -118,6 +120,22 @@ function wpcd_batch_page() {
 		}
 		else{
 			// Create Batch
+			 //for each post type, including media
+				 //generate lists of remote site and local site content
+				 //compare time stamps
+				 //add local items not found on the remote site to the list of modified content
+				 //add local items with more recent time stamps to the list of modified content
+				 //output the list items as checkbox fields organized by post type
+				 		//include post title, local modification date, remote modification date (or new)
+			//Preview
+				//Display only selected content to be deployed in the batch with warning message.
+
+			//Send batch
+				//after selecting items to deploy and previewing deployment
+				//series of posts to remote site rest endpoint
+				//Remote site responds with success or error for each post
+
+				//what about uploads? Do sites get set up with a shared uploads directory?
 		}
 
 	echo '</div>';
