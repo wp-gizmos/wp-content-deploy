@@ -1,12 +1,46 @@
 <?php
 /**
+*	Gets a setting from wp_options, or if already set from a global
+*	Example: define ('WPCD_REMOTE_URL', 'https://someurl.com');
+*
+*	@param string $setting 
+*	@return string
+*/
+function wpcd_setting( $setting ) {
+	if( defined( strtoupper($setting) ) )  {
+		return constant( strtoupper($setting) );
+	}
+	else{
+		return get_option( $setting );
+	}
+}
+
+
+/**
+*	Checks whether a setting is being overridden by a global
+*	Example: define ('WPCD_REMOTE_URL', 'https://someurl.com');
+*
+*	@param string $setting 
+*	@return string constant|option
+*/
+function wpcd_setting_type( $setting ) {
+	if( defined( strtoupper($setting) ) )  {
+		return 'constant';
+	}
+	else{
+		return 'option';
+	}
+}
+
+
+/**
 *	Admin Page for Plugin Settings
 */
 function wpcd_page() {
-	$wpcd_remote_url = get_option( 'wpcd_remote_url' );
-	$wpcd_key = get_option( 'wpcd_key' );
-	$wpcd_default_user = get_option( 'wpcd_default_user' );
-	$wpcd_local_environment = get_option( 'wpcd_local_environment' );
+	$wpcd_remote_url = wpcd_setting( 'wpcd_remote_url' );
+	$wpcd_key = wpcd_setting( 'wpcd_key' );
+	$wpcd_default_user = wpcd_setting( 'wpcd_default_user' );
+	$wpcd_local_environment = wpcd_setting( 'wpcd_local_environment' );
 
 	if(!isset($_POST['wpcd_nonce']) || ! wp_verify_nonce( $_POST['wpcd_nonce'], 'wpcd_save' )) {
 		// Set up the Form defaults
@@ -36,24 +70,24 @@ function wpcd_page() {
 					<th><label>Local Server Environment</label></th>
 					<td>
 						<label>
-							<input type="radio" name="wpcd_local_environment" class="regular-text code" value="staging" '.($wpcd_local_environment == 'staging' ? 'checked' : '').'>
+							<input '.(wpcd_setting_type( 'wpcd_local_environment' ) == 'constant' ? 'disabled' : '').' type="radio" name="wpcd_local_environment" class="regular-text code" value="staging" '.($wpcd_local_environment == 'staging' ? 'checked' : '').'>
 							staging
 						</label>
 						<br>
 						<label>
-							<input type="radio" name="wpcd_local_environment" class="regular-text code" value="production" '.($wpcd_local_environment == 'production' ? 'checked' : '').'>
+							<input '.(wpcd_setting_type( 'wpcd_local_environment' ) == 'constant' ? 'disabled' : '').' type="radio" name="wpcd_local_environment" class="regular-text code" value="production" '.($wpcd_local_environment == 'production' ? 'checked' : '').'>
 							production
 						</label>
 					</td>
 				</tr>
 				<tr>
 					<th><label>Remote Server URL</label></th>
-					<td><input type="text" name="wpcd_remote_url" id="wpcd_remote_url" class="regular-text code" value="'.$wpcd_remote_url.'"></td>
+					<td><input type="text" name="wpcd_remote_url" id="wpcd_remote_url" class="regular-text code" '.(wpcd_setting_type( 'wpcd_remote_url' ) == 'constant' ? 'disabled' : '').' value="'.$wpcd_remote_url.'"></td>
 				</tr>
 				<tr>
 					<th><label>Deployment Key</label></th>
 					<td>
-						<input type="password" name="wpcd_key" id="wpcd_key" class="regular-text code" value="'.$wpcd_key.'">
+						<input type="password" name="wpcd_key" id="wpcd_key" class="regular-text code" '.(wpcd_setting_type( 'wpcd_key' ) == 'constant' ? 'disabled' : '').' value="'.$wpcd_key.'">
 						<button class="button-secondary" id="wpcd-key-toggle">show</button>
 						<p><button class="button-secondary" id="wpcd-cd-keygen">Generate Key</button></p>
 						<p>This key must match on both staging and production sites</p>
@@ -80,14 +114,19 @@ function wpcd_page() {
 *	@return string <select> element
 */
 function wpcd_select_default_user($wpcd_default_user) {
+	if( wpcd_setting_type( 'wpcd_default_user' ) == 'constant' ) {
+		return '<input disabled type="text" value="'.wpcd_setting('wpcd_default_user').'">';
+	}
+
+
 	$return = '<select name="wpcd_select_default_user">';
 	$admin_users = get_users( array('role__in' => array('administrator', 'editor') ) );
 	foreach( $admin_users as $user ) {
-		if( $user->ID === $wpcd_default_user ) {
-			$return .= '<option selected value="'.$user->ID.'">'.esc_html( $user->display_name ).'</option>';
+		if( $user->display_name === $wpcd_default_user ) {
+			$return .= '<option selected value="'.$user->display_name.'">'.esc_html( $user->display_name ).'</option>';
 		}
 		else{
-			$return .= '<option value="'.$user->ID.'">'.esc_html( $user->display_name ).'</option>';
+			$return .= '<option value="'.$user->display_name.'">'.esc_html( $user->display_name ).'</option>';
 		}
 	}
 	$return .= '</select>';

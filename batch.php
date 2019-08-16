@@ -3,7 +3,7 @@
 *	Admin Page for Creating/Processing Batch Jobs
 */
 function wpcd_batch_page() {
-	$wpcd_key = get_option('wpcd_key');
+	$wpcd_key = wpcd_setting('wpcd_key');
 	echo '<div class="wrap">
 		<h1>Content Deploy Batch</h1>';
 
