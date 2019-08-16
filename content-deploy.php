@@ -7,6 +7,7 @@
   License: GPL2
 */
 
+require_once('api.php');
 
 /**
 *	WordPress css/js enqueue for wp-admin pages
