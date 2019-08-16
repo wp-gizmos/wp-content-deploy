@@ -35,23 +35,4 @@ add_action( 'admin_menu', 'wpcd_menu_page' );
 
 
 
-/**
-*	Returns a Dropdown to pick from administrators and editors to use as the default deploying user
-*
-* 	@param int $wpcd_default_user User ID of current default user
-*	@return string <select> element
-*/
-function wpcd_select_default_user($wpcd_default_user) {
-	$return = '<select name="wpcd_select_default_user">';
-	$admin_users = get_users( array('role__in' => array('administrator', 'editor') ) );
-	foreach( $admin_users as $user ) {
-		if( $user->ID === $wpcd_default_user ) {
-			$return .= '<option selected value="'.$user->ID.'">'.esc_html( $user->display_name ).'</option>';
-		}
-		else{
-			$return .= '<option value="'.$user->ID.'">'.esc_html( $user->display_name ).'</option>';
-		}
-	}
-	$return .= '</select>';
-	return $return;
-}
+?>
