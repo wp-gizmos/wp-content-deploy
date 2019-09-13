@@ -11,7 +11,10 @@ add_action( 'rest_api_init', function () {
 		'methods' => 'GET',
 		'callback' => 'wpcd_user_list',
 	) );
-
+	register_rest_route( 'wp-content-deploy/v1', '/files/', array(
+		'methods' => 'GET',
+		'callback' => 'wpcd_file_list',
+	) );
 } );
 
 
@@ -53,6 +56,34 @@ function wpcd_user_list() {
 
 	foreach ( $results as $result ) {
 		$return[base64_encode($result->user_email)] = base64_encode($result->usermeta);
+	}
+
+	return $return;
+}
+
+
+/**
+*	Returns list of files in media library folders
+*
+*	@return $return array
+*/
+function wpcd_file_list() {
+	$return = array();
+	$upload_info = wp_get_upload_dir();
+	// return $upload_info;
+
+	if( is_dir($upload_info['basedir']) ) {
+
+		$directoryIterator = new RecursiveDirectoryIterator( $upload_info['basedir'] );
+		$files = new RecursiveIteratorIterator( $directoryIterator );
+		foreach( $files as $file ){
+			$path = str_replace($upload_info['basedir'], '', $file->getPathname());
+			$url = $upload_info['baseurl'].$path;
+
+			if( !preg_match('/^\./', $file->getFilename()) ){
+				$return[$path] = $url;
+			}
+		}
 	}
 
 	return $return;
