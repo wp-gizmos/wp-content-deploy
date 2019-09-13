@@ -48,9 +48,6 @@ function wpcd_user_list() {
 
 	return $return;
 }
-<<<<<<< HEAD
-=======
-
 
 /**
 *	Returns list of files in media library folders
@@ -78,4 +75,3 @@ function wpcd_file_list() {
 
 	return $return;
 }
->>>>>>> c08b17d1cfb193b86419a3303dbf824e449a6530
