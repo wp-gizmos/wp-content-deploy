@@ -18,7 +18,7 @@ add_action( 'rest_api_init', function () {
 /**
 *	Returns list of posts by type and modified timestamp
 *
-*	@return $return array 
+*	@return $return array
 */
 function wpcd_post_list() {
 	global $wpdb;
@@ -35,14 +35,28 @@ function wpcd_post_list() {
 /**
 *	Returns list of users and postmeta
 *
-*	@return $return array 
+*	@return $return array
 */
 function wpcd_user_list() {
 	global $wpdb;
 	$return = array();
 
-	// TODO
-	// Get list of users by email, hash of user_meta
+	$query = "SELECT u.*,
+		SHA1(
+				(
+				SELECT GROUP_CONCAT( CONCAT_WS(':', m.meta_key, m.meta_value) SEPARATOR ',' )
+				FROM {$wpdb->prefix}usermeta m WHERE m.user_id = u.ID ORDER BY m.meta_key
+				)
+			) AS usermeta
+		FROM {$wpdb->prefix}users u;";
+
+	$results = $wpdb->get_results($query, OBJECT);
+
+	// $return = $wpdb->get_results($query, ARRAY_A);
+
+	foreach ( $results as $result ) {
+		$return[$result->user_email] = $result->usermeta;
+	}
 
 	return $return;
 }
