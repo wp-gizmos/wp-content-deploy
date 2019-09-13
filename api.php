@@ -44,8 +44,19 @@ function wpcd_user_list() {
 	global $wpdb;
 	$return = array();
 
-	// TODO
-	// Get list of users by email, hash of user_meta
+	$query = "SELECT u.*,
+			(
+			SELECT GROUP_CONCAT( CONCAT_WS(':', m.meta_key, m.meta_value) SEPARATOR ',' )
+			FROM {$wpdb->prefix}usermeta m WHERE m.user_id = u.ID ORDER BY m.meta_key
+			)
+			AS usermeta
+		FROM {$wpdb->prefix}users u;";
+
+	$results = $wpdb->get_results($query, OBJECT);
+
+	foreach ( $results as $result ) {
+		$return[base64_encode($result->user_email)] = base64_encode($result->usermeta);
+	}
 
 	return $return;
 }
