@@ -42,20 +42,17 @@ function wpcd_user_list() {
 	$return = array();
 
 	$query = "SELECT u.*,
-		SHA1(
-				(
-				SELECT GROUP_CONCAT( CONCAT_WS(':', m.meta_key, m.meta_value) SEPARATOR ',' )
-				FROM {$wpdb->prefix}usermeta m WHERE m.user_id = u.ID ORDER BY m.meta_key
-				)
-			) AS usermeta
+			(
+			SELECT GROUP_CONCAT( CONCAT_WS(':', m.meta_key, m.meta_value) SEPARATOR ',' )
+			FROM {$wpdb->prefix}usermeta m WHERE m.user_id = u.ID ORDER BY m.meta_key
+			)
+			AS usermeta
 		FROM {$wpdb->prefix}users u;";
 
 	$results = $wpdb->get_results($query, OBJECT);
 
-	// $return = $wpdb->get_results($query, ARRAY_A);
-
 	foreach ( $results as $result ) {
-		$return[$result->user_email] = $result->usermeta;
+		$return[base64_encode($result->user_email)] = base64_encode($result->usermeta);
 	}
 
 	return $return;
