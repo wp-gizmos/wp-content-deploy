@@ -1,7 +1,86 @@
 <?php
+
+
+/**
+* Return the endpoint url for the endpoints
+*/
+function get_wpcd_endpoint($site, $type){
+	if($site == 'remote'){
+		$root_domain = wpcd_setting( 'wpcd_remote_url' );
+	}else{
+		$root_domain = get_site_url();
+	}
+	switch ($type) {
+		case 'posts':
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
+			break;
+		case 'users':
+		$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/users/';
+
+		default:
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
+			break;
+	}
+	return $endpoint;
+}
+
+/**
+* function to return a list of posts from the endpoint
+*/
+function wpcd_request_posts($site){
+	$endpoint = get_wpcd_endpoint($site, 'posts');
+	$response = wp_remote_get( $endpoint );
+	$posts = '';
+	if(!empty($response['response']) && $response['response']['code'] == 200){
+		$posts = json_decode($response['body'], true);
+	}
+	return $posts;
+}
+
+
+/**
+* check for any net-new content, and return an array of new posts
+*/
+function wpcd_get_new_posts($local_posts, $remote_posts){
+	return array_diff_key($local_posts, $remote_posts);
+}
+/**
+* compare to post arrays and return posts that have been modified since
+*/
+function wpcd_get_modified_posts($local_posts, $remote_posts){
+	$modified_posts = array();
+	//error_log(print_r($remote_posts, true));
+	return array_diff_assoc($local_posts, $remote_posts);
+
+	//get the list of net new posts - content we need to create.
+
+	foreach ($local_posts as $post => $timestamp) {
+
+			if(property_exists($remote_posts, $post)){
+				error_log('found matching post');
+				//found this post, compare wpcd_compare_timestamps
+				if(wpcd_compare_timestamps($post, $remote_posts->$post)){
+
+				}
+			}else{
+				//this post doesn't exist on the remote, add it to the modified array
+				$modified_posts[] = $post;
+			}
+
+
+		}
+}
+
+function wpcd_compare_timestamps($a, $b){
+	// returns true if $a is more recent than $b
+	error_log('date diff a b '.date_diff($a, $b));
+
+}
+
 /**
 *	Admin Page for Creating/Processing Batch Jobs
 */
+
 function wpcd_batch_page() {
 	$wpcd_key = wpcd_setting('wpcd_key');
 
@@ -17,7 +96,10 @@ function wpcd_batch_page() {
 
 				if( wp_verify_nonce( $_POST['wpcd_nonce'], 'wpcd_preview' ) ) {
 					//Preview/verify batch - this form displays content to be deployed and allows a user to cancel and go back or submit the form to deploy content
-						//Display only selected content to be deployed in the batch with warning message.
+					//Display only selected content to be deployed in the batch with warning message.
+
+
+
 					$title = 'Preview Batch';
 					$output .= '<form method="post">';
 					$output .= wp_nonce_field( 'wpcd_send', 'wpcd_nonce' );
@@ -53,6 +135,50 @@ function wpcd_batch_page() {
 							//include post title, slug, modifed by, local modification date, remote modification date (or new)
 								//add links to the post edit screen for convenience.
 							//input value = guid
+
+				//get the posts from the two sites
+				$remote_posts = wpcd_request_posts('remote');
+				$local_posts = wpcd_request_posts('local');
+				//compare timestamps
+				$new_posts = wpcd_get_new_posts($local_posts, $remote_posts);
+				$modified_posts = wpcd_get_modified_posts($local_posts, $remote_posts);
+				//error_log('new '.print_r($new_posts, true));
+				//error_log('modified '.print_r($modified_posts, true));
+
+				$guids = "'".implode("','", array_keys($modified_posts))."'";
+				global $wpdb;
+				$results = array();
+				$query = "SELECT GROUP_CONCAT(ID SEPARATOR ',') FROM {$wpdb->prefix}posts WHERE guid IN ($guids)";
+				$results = $wpdb->get_row($query, ARRAY_N);
+
+				//error_log('post id array '.print_r($results, true));
+				if(!empty($results)){
+					$modified_post_ids = $results[0];
+					error_log($modified_post_ids);
+					$args = array(
+						'post__in' => explode(',', $modified_post_ids)
+					);
+					$mod_posts_query = new WP_Query($args);
+					global $post;
+					//error_log(print_r($mod_posts_query, true));
+					if($mod_posts_query->have_posts()) :
+						$show_form = true;
+						while($mod_posts_query->have_posts()) :
+							//build an array or posts and the post meta that we need to build the form.
+							// - post type
+							//
+							$mod_posts_query->the_post();
+
+							error_log(print_r($post, true));
+
+						endwhile;
+					endif;
+
+
+
+				}
+
+
 				$title = 'Create Batch';
 				$output .= '<form method="post">';
 				$output .= wp_nonce_field( 'wpcd_preview', 'wpcd_nonce' );

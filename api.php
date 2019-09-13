@@ -14,11 +14,10 @@ add_action( 'rest_api_init', function () {
 
 } );
 
-
 /**
 *	Returns list of posts by type and modified timestamp
 *
-*	@return $return array 
+*	@return $return array
 */
 function wpcd_post_list() {
 	global $wpdb;
@@ -35,7 +34,7 @@ function wpcd_post_list() {
 /**
 *	Returns list of users and postmeta
 *
-*	@return $return array 
+*	@return $return array
 */
 function wpcd_user_list() {
 	global $wpdb;
