@@ -142,19 +142,21 @@ function wpcd_batch_page() {
 				//compare timestamps
 				$new_posts = wpcd_get_new_posts($local_posts, $remote_posts);
 				$modified_posts = wpcd_get_modified_posts($local_posts, $remote_posts);
-				//error_log('new '.print_r($new_posts, true));
-				//error_log('modified '.print_r($modified_posts, true));
+			//	error_log('new '.print_r($new_posts, true));
+			//	error_log('modified '.print_r($modified_posts, true));
 
 				$guids = "'".implode("','", array_keys($modified_posts))."'";
+			//	error_log('guids: '.print_r(array_keys($modified_posts), true));
 				global $wpdb;
 				$results = array();
 				$query = "SELECT GROUP_CONCAT(ID SEPARATOR ',') FROM {$wpdb->prefix}posts WHERE guid IN ($guids)";
 				$results = $wpdb->get_row($query, ARRAY_N);
+				$mod_posts_types = array();
+				$form_field_output = '';
 
 				//error_log('post id array '.print_r($results, true));
 				if(!empty($results)){
 					$modified_post_ids = $results[0];
-					error_log($modified_post_ids);
 					$args = array(
 						'post__in' => explode(',', $modified_post_ids)
 					);
@@ -169,9 +171,19 @@ function wpcd_batch_page() {
 							//
 							$mod_posts_query->the_post();
 
-							error_log(print_r($post, true));
+
+							$mod_posts_types[] = $post->post_type;
+
+							$form_field_output .= '<tr class="field-wrapper">
+								<td class="checkbox-wrapper"><input type="checkbox" value="'.get_the_guid($post->ID).'"></input></td>
+								<td>
+								<h4 >'.get_the_title($post->ID).'</h4>
+								<p>Last modified '.get_the_modified_date('l, M jS, Y', $post->ID).' at ' .get_the_modified_time('g:i A', $post->ID).' by '.get_the_author().' - <span><a href="'.get_the_permalink($post->ID).'" target="_blank">View Post</a> | <a href="'.get_edit_post_link($post->ID).'" target="_blank">Edit post</a></span></p>
+								</td>
+							</tr>';
 
 						endwhile;
+						error_log('post types: '.print_r($mod_posts_types, true));
 					endif;
 
 
@@ -180,14 +192,19 @@ function wpcd_batch_page() {
 
 
 				$title = 'Create Batch';
+				$instructions = 'Choose the items you want to sync and then preview the batch.';
 				$output .= '<form method="post">';
+				$output.= '<h2>Modified Posts</h2>';
+				$output.= '<table class="widefat striped">';
+				$output .= $form_field_output;
+				$output .= '</table>';
 				$output .= wp_nonce_field( 'wpcd_preview', 'wpcd_nonce' );
 				$output .= get_submit_button('Preview Batch', 'primary');
 				$output .= '</form>';
 			}
 
 	echo '<div class="wrap">
-		<h1>'.$title.'</h1>';
+		<h1>'.$title.'</h1><p>'.$instructions.'</p>';
 	echo $output;
 	echo '</div>';
 	}
