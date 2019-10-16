@@ -12,4 +12,10 @@ Also, the GUID is typically a permalink, and if you are migrating sites, you mig
 Rest endpoints are prefixed with ```/wp-json/```
 
 GET
+```wp-content-deploy/v1/posts```
+
+GET
+```wp-content-deploy/v1/users``` 
+
+GET
 ```wp-content-deploy/v1/files```
