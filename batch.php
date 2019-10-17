@@ -48,32 +48,9 @@ function wpcd_get_new_posts($local_posts, $remote_posts){
 * compare to post arrays and return posts that have been modified since
 */
 function wpcd_get_modified_posts($local_posts, $remote_posts){
-	$modified_posts = array();
-	//error_log(print_r($remote_posts, true));
+
 	return array_diff_assoc($local_posts, $remote_posts);
 
-	//get the list of net new posts - content we need to create.
-
-	foreach ($local_posts as $post => $timestamp) {
-
-			if(property_exists($remote_posts, $post)){
-				error_log('found matching post');
-				//found this post, compare wpcd_compare_timestamps
-				if(wpcd_compare_timestamps($post, $remote_posts->$post)){
-
-				}
-			}else{
-				//this post doesn't exist on the remote, add it to the modified array
-				$modified_posts[] = $post;
-			}
-
-
-		}
-}
-
-function wpcd_compare_timestamps($a, $b){
-	// returns true if $a is more recent than $b
-	error_log('date diff a b '.date_diff($a, $b));
 
 }
 
