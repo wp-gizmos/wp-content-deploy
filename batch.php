@@ -78,6 +78,17 @@ function wpcd_compare_timestamps($a, $b){
 }
 
 /**
+* Post Details template
+*/
+function wpcd_post_details($post_id){
+	$markup =  '';
+	if(isset($post_id)){
+		$markup .= '<h4 >'.get_the_title($post_id).'</h4><p>Last modified '.get_the_modified_date('l, M jS, Y', $post_id).' at ' .get_the_modified_time('g:i A', $post_id).' by '.get_the_author().' - <span><a href="'.get_the_permalink($post_id).'" target="_blank">View Post</a> | <a href="'.get_edit_post_link($post_id).'" target="_blank">Edit post</a></span></p>';
+	}
+	return $markup;
+}
+
+/**
 *	Admin Page for Creating/Processing Batch Jobs
 */
 
@@ -99,11 +110,24 @@ function wpcd_batch_page() {
 					//Display only selected content to be deployed in the batch with warning message.
 
 
-
+					$posts_to_sync = array();
+					foreach ($_POST as $name => $value) {
+						if(strpos($name, 'postid_') !== false){
+							$posts_to_sync[] = filter_input( INPUT_POST, $name, FILTER_SANITIZE_SPECIAL_CHARS );
+						}
+					}
 					$title = 'Preview Batch';
-					$output .= '<form method="post">';
+					$output .= '<p>The following content will be deployed</p>';
+					$output .= '<form method="post"><table class="form-table striped">';
+
 					$output .= wp_nonce_field( 'wpcd_send', 'wpcd_nonce' );
-					$output .= '<a href="" class="button-secondary">Cancel</a>';
+					foreach($posts_to_sync as $post_id){
+						$output.= '<tr><td><input type="hidden" name="postid_'.$post_id.'" value ="'.get_the_guid($post_id).'"></input>';
+						$output .= wpcd_post_details($post_id);
+						$output .= '</td></tr>';
+					}
+					$output .= '</table>';
+					$output .= '<a href="" class=""> << Cancel </a>';
 					$output .= get_submit_button('Send Batch', 'primary');
 					$output .= '</form>';
 				}
@@ -175,15 +199,13 @@ function wpcd_batch_page() {
 							$mod_posts_types[] = $post->post_type;
 
 							$form_field_output .= '<tr class="field-wrapper">
-								<td class="checkbox-wrapper"><input type="checkbox" value="'.get_the_guid($post->ID).'"></input></td>
+								<td class="checkbox-wrapper"><input name="postid_'.$post->ID.'"type="checkbox" value="'.$post->ID.'"></input></td>
 								<td>
-								<h4 >'.get_the_title($post->ID).'</h4>
-								<p>Last modified '.get_the_modified_date('l, M jS, Y', $post->ID).' at ' .get_the_modified_time('g:i A', $post->ID).' by '.get_the_author().' - <span><a href="'.get_the_permalink($post->ID).'" target="_blank">View Post</a> | <a href="'.get_edit_post_link($post->ID).'" target="_blank">Edit post</a></span></p>
+								'.wpcd_post_details($post->ID).'
 								</td>
 							</tr>';
 
 						endwhile;
-						error_log('post types: '.print_r($mod_posts_types, true));
 					endif;
 
 
@@ -195,7 +217,7 @@ function wpcd_batch_page() {
 				$instructions = 'Choose the items you want to sync and then preview the batch.';
 				$output .= '<form method="post">';
 				$output.= '<h2>Modified Posts</h2>';
-				$output.= '<table class="widefat striped">';
+				$output.= '<table class="form-table widefat striped">';
 				$output .= $form_field_output;
 				$output .= '</table>';
 				$output .= wp_nonce_field( 'wpcd_preview', 'wpcd_nonce' );
