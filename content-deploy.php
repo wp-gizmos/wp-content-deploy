@@ -8,8 +8,8 @@
 */
 
 require_once(dirname(__FILE__).'/settings.php'); //settings page
-require_once(dirname(__FILE__).'/batch.php'); //page for creating and sending batches
 require_once(dirname(__FILE__).'/api.php');
+require_once(dirname(__FILE__).'/batch.php'); //page for creating and sending batches
 require_once(dirname(__FILE__).'/media.php');
 
 /**
