@@ -7,9 +7,10 @@
   License: GPL2
 */
 
-require_once('settings.php'); //settings page
-require_once('batch.php'); //page for creating and sending batches
-require_once('api.php');
+require_once(dirname(__FILE__).'/settings.php'); //settings page
+require_once(dirname(__FILE__).'/batch.php'); //page for creating and sending batches
+require_once(dirname(__FILE__).'/api.php');
+require_once(dirname(__FILE__).'/media.php');
 
 /**
 *	WordPress css/js enqueue for wp-admin pages
@@ -29,8 +30,9 @@ add_action( 'admin_enqueue_scripts', 'wpcd_enqueue' );
 */
 function wpcd_menu_page() {
 	add_menu_page( '', 'Content Deploy', 'manage_options', 'wp-content-deploy', 'wpcd_page', 'dashicons-upload', 4 );
-	add_submenu_page( 'wp-content-deploy', 'Settings', 'Settings', 'manage_options', 'wp-content-deploy', 'wpcd_page' );
 	add_submenu_page( 'wp-content-deploy', 'Add Batch', 'Add Batch', 'manage_options', 'wp-content-deploy-batch', 'wpcd_batch_page' );
+	add_submenu_page( 'wp-content-deploy', 'Media Sync', 'Media Sync', 'manage_options', 'wp-content-deploy-media', 'wpcd_media_page' );
+	add_submenu_page( 'wp-content-deploy', 'Settings', 'Settings', 'manage_options', 'wp-content-deploy', 'wpcd_page' );
 }
 add_action( 'admin_menu', 'wpcd_menu_page' );
 
