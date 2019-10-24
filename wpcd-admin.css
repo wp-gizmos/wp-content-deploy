@@ -6,3 +6,8 @@ tr.field-wrapper td.checkbox-wrapper{
   text-align: center;
   border-right: 1px solid #ccc;
 }
+
+ul.disc{
+  padding-inline-start: 40px;
+  list-style: disc;
+}
