@@ -55,12 +55,22 @@ function wpcd_get_modified_posts($local_posts, $remote_posts){
 }
 
 /**
-* Post Details template
+* Post Details templates
 */
 function wpcd_post_details($post_id){
 	$markup =  '';
+	$post_type_obj = get_post_type_object(get_post_type($post_id));
 	if(isset($post_id)){
-		$markup .= '<h4 >'.get_the_title($post_id).'</h4><p>Last modified '.get_the_modified_date('l, M jS, Y', $post_id).' at ' .get_the_modified_time('g:i A', $post_id).' by '.get_the_author().' - <span><a href="'.get_the_permalink($post_id).'" target="_blank">View Post</a> | <a href="'.get_edit_post_link($post_id).'" target="_blank">Edit post</a></span></p>';
+		$markup .= '<h4 >'.get_the_title($post_id).'</h4><p>Last modified '.get_the_modified_date('l, M jS, Y', $post_id).' at ' .get_the_modified_time('g:i A', $post_id).' by '.get_the_author().' - <span><a href="'.get_the_permalink($post_id).'" target="_blank">View '.$post_type_obj->labels->singular_name.'</a> | <a href="'.get_edit_post_link($post_id).'" target="_blank">Edit '.$post_type_obj->labels->singular_name.'</a></span></p>';
+	}
+	return $markup;
+}
+
+function wpcd_preview_details($post_id){
+	$markup = '';
+	$post_type_obj = get_post_type_object(get_post_type($post_id));
+	if(isset($post_id)){
+		$markup .= '<strong>'.get_the_title($post_id).'</strong> - <span><a href="'.get_the_permalink($post_id).'" target="_blank">View '.$post_type_obj->labels->singular_name.'</a> </span>';
 	}
 	return $markup;
 }
@@ -95,13 +105,22 @@ function wpcd_batch_page() {
 					}
 					$title = 'Preview Batch';
 					$output .= '<p>The following content will be deployed</p>';
-					$output .= '<form method="post"><table class="form-table striped">';
+					$current_post_type = '';
+					$output .= '<form method="post"><table class="form-table">';
 
 					$output .= wp_nonce_field( 'wpcd_send', 'wpcd_nonce' );
 					foreach($posts_to_sync as $post_id){
-						$output.= '<tr><td><input type="hidden" name="postid_'.$post_id.'" value ="'.get_the_guid($post_id).'"></input>';
-						$output .= wpcd_post_details($post_id);
-						$output .= '</td></tr>';
+						if($current_post_type !== ''){
+							$output .= '</ul>';//close the previous table
+						}
+						if($current_post_type !== get_post_type($post_id)){
+							$output.= '<h4>'.get_post_type_object(get_post_type($post_id))->labels->menu_name.'</h4>';
+							$output .= '<ul class="">';
+							$current_post_type = get_post_type($post_id);
+						}
+						$output.= '<li><input type="hidden" name="postid_'.$post_id.'" value ="'.get_the_guid($post_id).'"></input>';
+						$output .= wpcd_preview_details($post_id);
+						$output .= '</li>';
 					}
 					$output .= '</table>';
 					$output .= '<a href="" class=""> << Cancel </a>';
@@ -118,85 +137,64 @@ function wpcd_batch_page() {
 					$title = 'Send Batch';
 					$output .= '<progress id="wpcd-batch-progress" class="widefat" max="100" value="0">0%</progress>';
 					$output .= '<div>sending batch...</div>';
+					//for each guid in the incoming post request do this:
+					//make a hidden form for each guid
 				}
 			}else{
-				//create a new batch
-				// Create Batch - this form displays updated and new content and allows a user to select content to be deployed
-				 //for each post type, including media
-					 //generate lists of remote site and local site content
-						// staging site query database and get a list of all timestamps and guid for published items
-						// rest api endpoint on production returns timestamps and GUID for everything in the database
-						// key value pairs with guid->timestamp
-					 //compare time stamps - array diff on the two arrays
-						 //add local items not found on the remote site to the list of modified content
-						 //add local items with more recent time stamps to the list of modified content
-					//Query staging site for updated content - titles, slug, guid, modified date, modified author
-					 //create a form with inputs for each changed item to select if it gets deployed
-					 //output the list items as checkbox fields organized by post type
-							//include post title, slug, modifed by, local modification date, remote modification date (or new)
-								//add links to the post edit screen for convenience.
-							//input value = guid
+				//Create a new batch
 
 				//get the posts from the two sites
 				$remote_posts = wpcd_request_posts('remote');
 				$local_posts = wpcd_request_posts('local');
+
 				//compare timestamps
 				$new_posts = wpcd_get_new_posts($local_posts, $remote_posts);
 				$modified_posts = wpcd_get_modified_posts($local_posts, $remote_posts);
-			//	error_log('new '.print_r($new_posts, true));
-			//	error_log('modified '.print_r($modified_posts, true));
+				//error_log('new '.print_r($new_posts, true));
+				//error_log('modified '.print_r($modified_posts, true));
 
 				$guids = "'".implode("','", array_keys($modified_posts))."'";
-			//	error_log('guids: '.print_r(array_keys($modified_posts), true));
+
+				//query the database for the updated posts and post meta
 				global $wpdb;
 				$results = array();
-				$query = "SELECT GROUP_CONCAT(ID SEPARATOR ',') FROM {$wpdb->prefix}posts WHERE guid IN ($guids)";
-				$results = $wpdb->get_row($query, ARRAY_N);
+				//old way $query = "SELECT GROUP_CONCAT(ID SEPARATOR ',') FROM {$wpdb->prefix}posts WHERE guid IN ($guids)";
+				$query = "SELECT ID, post_type, post_modified_gmt FROM wp_posts WHERE post_status='publish' and guid IN($guids) ORDER BY post_type, post_modified_gmt";
+				//matt says
+				$results = $wpdb->get_results($query, ARRAY_A);
 				$mod_posts_types = array();
 				$form_field_output = '';
+				$current_post_type = '';
 
-				//error_log('post id array '.print_r($results, true));
 				if(!empty($results)){
-					$modified_post_ids = $results[0];
-					$args = array(
-						'post__in' => explode(',', $modified_post_ids)
-					);
-					$mod_posts_query = new WP_Query($args);
-					global $post;
-					//error_log(print_r($mod_posts_query, true));
-					if($mod_posts_query->have_posts()) :
-						$show_form = true;
-						while($mod_posts_query->have_posts()) :
-							//build an array or posts and the post meta that we need to build the form.
-							// - post type
-							//
-							$mod_posts_query->the_post();
+					foreach ($results as $modified_post) {
+						$post_id = $modified_post['ID'];
+						$post_type_obj = get_post_type_object($modified_post['post_type']);
+						if($current_post_type !== $modified_post['post_type']){
 
+							if($current_post_type !== ''){
+								$form_field_output .= '</table>';  //close the previous post type table
+							}
 
-							$mod_posts_types[] = $post->post_type;
-
-							$form_field_output .= '<tr class="field-wrapper">
-								<td class="checkbox-wrapper"><input name="postid_'.$post->ID.'"type="checkbox" value="'.$post->ID.'"></input></td>
-								<td>
-								'.wpcd_post_details($post->ID).'
-								</td>
-							</tr>';
-
-						endwhile;
-					endif;
-
-
-
+							$form_field_output .= '<h3>'.$post_type_obj->labels->menu_name.'</h3>';
+							$form_field_output .= '<table class="form-table widefat striped">';//open a new table
+							$current_post_type = $modified_post['post_type'];
+						}
+						$form_field_output .= '<tr class="field-wrapper">
+							<td class="checkbox-wrapper"><input name="postid_'.$post_id.'"type="checkbox" value="'.$post_id.'"></input></td>
+							<td>
+							'.wpcd_post_details($post_id).'
+							</td>
+						</tr>';
+					}
+					$form_field_output .= '</table>';
 				}
 
 
 				$title = 'Create Batch';
 				$instructions = 'Choose the items you want to sync and then preview the batch.';
 				$output .= '<form method="post">';
-				$output.= '<h2>Modified Posts</h2>';
-				$output.= '<table class="form-table widefat striped">';
 				$output .= $form_field_output;
-				$output .= '</table>';
 				$output .= wp_nonce_field( 'wpcd_preview', 'wpcd_nonce' );
 				$output .= get_submit_button('Preview Batch', 'primary');
 				$output .= '</form>';
