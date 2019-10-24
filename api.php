@@ -17,6 +17,37 @@ add_action( 'rest_api_init', function () {
 	) );
 } );
 
+
+/**
+* Return the endpoint url for the endpoints
+*/
+function get_wpcd_endpoint($site, $type){
+	if($site == 'remote'){
+		$root_domain = wpcd_setting( 'wpcd_remote_url' );
+	}else{
+		$root_domain = get_site_url();
+	}
+	switch ($type) {
+		case 'posts':
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
+			break;
+
+		case 'users':
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/users/';
+			break;
+
+		case 'files':
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/files/';
+			break;
+
+		default:
+			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
+			break;
+	}
+	return $endpoint;
+}
+
+
 /**
 *	Returns list of posts by type and modified timestamp
 *

@@ -1,29 +1,4 @@
 <?php
-
-
-/**
-* Return the endpoint url for the endpoints
-*/
-function get_wpcd_endpoint($site, $type){
-	if($site == 'remote'){
-		$root_domain = wpcd_setting( 'wpcd_remote_url' );
-	}else{
-		$root_domain = get_site_url();
-	}
-	switch ($type) {
-		case 'posts':
-			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
-			break;
-		case 'users':
-		$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/users/';
-
-		default:
-			$endpoint = $root_domain.'/wp-json/wp-content-deploy/v1/posts/';
-			break;
-	}
-	return $endpoint;
-}
-
 /**
 * function to return a list of posts from the endpoint
 */
