@@ -8,8 +8,9 @@
 */
 
 require_once('settings.php'); //settings page
-require_once('batch.php'); //page for creating and sending batches
 require_once('api.php');
+require_once('batch.php'); //page for creating and sending batches
+
 
 /**
 *	WordPress css/js enqueue for wp-admin pages

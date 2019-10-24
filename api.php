@@ -17,7 +17,6 @@ add_action( 'rest_api_init', function () {
 	) );
 } );
 
-
 /**
 *	Returns list of posts by type and modified timestamp
 *
@@ -60,7 +59,6 @@ function wpcd_user_list() {
 
 	return $return;
 }
-
 
 /**
 *	Returns list of files in media library folders

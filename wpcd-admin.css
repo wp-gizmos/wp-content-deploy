@@ -1,2 +1,8 @@
 /* wpcd-admin.css */
 
+tr.field-wrapper td.checkbox-wrapper{
+  width: 50px;
+  vertical-align: middle;
+  text-align: center;
+  border-right: 1px solid #ccc;
+}
