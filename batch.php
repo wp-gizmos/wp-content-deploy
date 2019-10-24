@@ -68,9 +68,8 @@ function wpcd_post_details($post_id){
 
 function wpcd_preview_details($post_id){
 	$markup = '';
-	$post_type_obj = get_post_type_object(get_post_type($post_id));
 	if(isset($post_id)){
-		$markup .= '<strong>'.get_the_title($post_id).'</strong> - <span><a href="'.get_the_permalink($post_id).'" target="_blank">View '.$post_type_obj->labels->singular_name.'</a> </span>';
+		$markup .= '<span><strong>'.get_the_title($post_id).'</strong> - <a href="'.get_the_permalink($post_id).'" target="_blank">view</a></span>';
 	}
 	return $markup;
 }
@@ -110,19 +109,21 @@ function wpcd_batch_page() {
 
 					$output .= wp_nonce_field( 'wpcd_send', 'wpcd_nonce' );
 					foreach($posts_to_sync as $post_id){
-						if($current_post_type !== ''){
-							$output .= '</ul>';//close the previous table
-						}
+
 						if($current_post_type !== get_post_type($post_id)){
-							$output.= '<h4>'.get_post_type_object(get_post_type($post_id))->labels->menu_name.'</h4>';
-							$output .= '<ul class="">';
+							if($current_post_type !== ''){
+								$output .= '</ul>';//close the previous table
+							}
+							$output.= '<h3>'.get_post_type_object(get_post_type($post_id))->labels->menu_name.'</h3>';
+							$output .= '<ul class="disc">';
 							$current_post_type = get_post_type($post_id);
 						}
+
 						$output.= '<li><input type="hidden" name="postid_'.$post_id.'" value ="'.get_the_guid($post_id).'"></input>';
 						$output .= wpcd_preview_details($post_id);
 						$output .= '</li>';
 					}
-					$output .= '</table>';
+					$output .= '</ul>';
 					$output .= '<a href="" class=""> << Cancel </a>';
 					$output .= get_submit_button('Send Batch', 'primary');
 					$output .= '</form>';
