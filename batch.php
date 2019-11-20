@@ -119,7 +119,7 @@ function wpcd_batch_page() {
 							$current_post_type = get_post_type($post_id);
 						}
 
-						$output.= '<li><input type="hidden" name="postid_'.$post_id.'" value ="'.get_the_guid($post_id).'"></input>';
+						$output.= '<li><input type="hidden" name="postid_'.$post_id.'" value ="'.$post_id.'"></input>';
 						$output .= wpcd_preview_details($post_id);
 						$output .= '</li>';
 					}
@@ -130,16 +130,28 @@ function wpcd_batch_page() {
 				}
 				else if( wp_verify_nonce( $_POST['wpcd_nonce'], 'wpcd_send' ) ){
 					//Send batch - this page loops through the content to deploy and makes a series of post requests to the remote site.
-						//after selecting items to deploy and previewing deployment
-						//series of posts to remote site rest endpoint
 
-						//Remote site responds with success or error for each post
-						//status bar shows 1 of 10, 2 of 10, etc
+					$posts_to_sync = array();
+					foreach ($_POST as $name => $value) {
+						if(strpos($name, 'postid_') !== false){
+							$posts_to_sync[] = filter_input( INPUT_POST, $name, FILTER_SANITIZE_SPECIAL_CHARS );
+						}
+					}
+
 					$title = 'Send Batch';
 					$output .= '<progress id="wpcd-batch-progress" class="widefat" max="100" value="0">0%</progress>';
 					$output .= '<div>sending batch...</div>';
+					$output .= '<ul id="wpcd-post-send-list">';
+
+					foreach ($posts_to_sync as $p=>$post_id) {
+						$output .= '<li class="queued"><input type="hidden" name="post_id_'.$post_id.'" value="'.get_the_guid($post_id).'" />'.get_the_title($post_id).'</li>';
+					}
+					$output .= '</ul>';
+
+
 					//for each guid in the incoming post request do this:
 					//make a hidden form for each guid
+
 				}
 			}else{
 				//Create a new batch

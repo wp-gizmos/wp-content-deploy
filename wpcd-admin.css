@@ -11,3 +11,24 @@ ul.disc{
   padding-inline-start: 40px;
   list-style: disc;
 }
+
+li.queued {
+  color: #ccc;
+}
+
+li.sending{
+  color: #333;
+}
+
+li.success{
+  color: #5A5;
+}
+li.success:before{
+  content:"\2714 ";
+}
+li.error{
+  color: #C55;
+}
+li.error:before{
+  content:"\26A0 ";
+}
